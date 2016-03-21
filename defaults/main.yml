@@ -1,0 +1,6 @@
+---
+
+repositories_path: /var/backups
+borg_user: borg
+borg_group: borg
+clients: []

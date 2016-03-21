@@ -1,0 +1,24 @@
+---
+
+- name: Create borg group
+  group: name="{{ borg_group }}" state=present
+
+- name: Create borg user
+  user: name="{{ borg_user }}" shell=/bin/bash home="{{ repositories_path }}" group="{{ borg_group }}" comment="Borg Backup storage" state=present
+
+- name: Create repositories directory
+  file: path="{{ repositories_path }}" owner="{{ borg_user }}" group="{{ borg_group }}" mode=0700 state=directory
+
+- name: Create SSH directory
+  file: path="{{ repositories_path }}/.ssh" owner="{{ borg_user }}" group="{{ borg_group }}" mode=0700 state=directory
+
+- name: Create client directories
+  file: path="{{ repositories_path }}/{{ item.host }}" owner="{{ borg_user }}" group="{{ borg_group }}" mode=0700 state=directory
+  with_items: clients
+
+- name: Setup SSH authorized keys
+  authorized_key: >
+    user="{{ borg_user }}"
+    key="{{ item.ssh_pub_key }}"
+    key_options='command="cd {{ repositories_path }}/{{ item.host }} && borg serve --restrict-to-path {{ repositories_path }}/{{ item.host }}",no-port-forwarding,no-X11-forwarding,no-pty,no-agent-forwarding,no-user-rc'
+  with_items: clients
